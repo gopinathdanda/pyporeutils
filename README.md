@@ -4,6 +4,6 @@ This packages is an extension of https://github.com/parkin/pypore. It uses the r
 
 ## Dependencies
 
-Pypore (https://github.com/parkin/pypore)
-Numpy
-Matplotlib
+* Pypore (https://github.com/parkin/pypore)
+* Numpy
+* Matplotlib
