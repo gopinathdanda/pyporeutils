@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # EXTRACT TIMES TRACES OF CURRENT OR CONDUCTANCE FROM HKD FILE
 
 from pypore.i_o import get_reader_from_filename

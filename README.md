@@ -7,3 +7,5 @@ This packages is an extension of https://github.com/parkin/pypore. It uses the r
 * Pypore (https://github.com/parkin/pypore)
 * Numpy
 * Matplotlib
+* Math
+* Scipy
