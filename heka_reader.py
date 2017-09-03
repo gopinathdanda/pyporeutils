@@ -1,13 +1,6 @@
-import scipy.io as sio
-import numpy as np
-
 import numpy as np
 import os
 
-#from cpython cimport bool
-#from pypore.i_o.abstract_reader cimport AbstractReader
-
-#ctypedef np.float_t DTYPE_t
 
 # Data types list, in order specified by the HEKA file header v2.0.
 # Using big-endian.
@@ -18,7 +11,7 @@ ENCODINGS = [np.dtype('>u1'), np.dtype('>u2'), np.dtype('>u4'),
              np.dtype('>f4'), np.dtype('>f8'), np.dtype('>S64'),
              np.dtype('>S512'), np.dtype('<u2')]
 
-def getParamListByteLength(param_list):
+def get_param_list_byte_length(param_list):
     """
     Returns the length in bytes of the sum of all the parameters in the list.
     Here, list[i][0] = param, list[i][1] = np.dtype
@@ -57,8 +50,8 @@ class HekaReader:
         self.per_file_header_length = self.heka_file.tell()
 
         # Calculate the block lengths
-        self.per_channel_per_block_length = getParamListByteLength(self.per_channel_param_list)
-        self.per_block_length = getParamListByteLength(self.per_block_param_list)
+        self.per_channel_per_block_length = get_param_list_byte_length(self.per_channel_param_list)
+        self.per_block_length = get_param_list_byte_length(self.per_block_param_list)
 
         self.channel_list_number = len(self.channel_list)
 
