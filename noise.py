@@ -6,6 +6,7 @@ import heka_reader as heka
 import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams['agg.path.chunksize'] = 20000
+from matplotlib.widgets import Slider, Button
 from scipy import signal
 from scipy.optimize import curve_fit
 
@@ -91,12 +92,14 @@ if view_trace == True:
 
 psd, f, pspec, fspec = noise(i, fs)
 print("I_rms = %0.2f pA" % (np.sqrt(pspec.max())))
+
 #plt.loglog(fspec, np.sqrt(pspec))
-plt.figure()
-plt.loglog(f, psd)
-#plt.ylim(1e-2, 1e4)
-plt.xlim(5,2e4)
+fig = plt.figure()
+ax = fig.add_subplot(111)
+
 if view_noise_fit == True:
+    fig.subplots_adjust(bottom=0.25)
+    ax.loglog(f, psd)
     x, popt, pcov = fit(f, psd, invf, start = noise_lims[0], stop = noise_lims[1])
     print("-------------------------")
     print("1/f Noise Characteristics")
@@ -104,10 +107,42 @@ if view_noise_fit == True:
     Avalue = popt[0]/(np.mean(i)**2)
     print("A = %0.2e" % Avalue)
     print(u"\u03B1 = %0.2f" % popt[1])
-    plt.loglog(x, invf(x, *popt), 'r--')
+    a_0 = popt[0]
+    alpha_0 = popt[1]
+    t = ax.text(0.1, 0.1,("A = %0.2e" % Avalue),
+     horizontalalignment='center',
+     verticalalignment='center',
+     transform = ax.transAxes)
+    [fit_line] = ax.loglog(x, invf(x, a_0, alpha_0), 'r--')
+    
+    # Add two sliders for tweaking the parameters
+    a_slider_ax  = fig.add_axes([0.15, 0.15, 0.75, 0.03])
+    a_slider = Slider(a_slider_ax, r'$A*I^2$', 0, 100, valinit=a_0)
+    alpha_slider_ax = fig.add_axes([0.15, 0.1, 0.75, 0.03])
+    alpha_slider = Slider(alpha_slider_ax, r'$\alpha$', 0, 1.5, valinit=alpha_0)
+    def sliders_on_changed(val):
+        fit_line.set_ydata(invf(x, a_slider.val, alpha_slider.val))
+        new_Aval = a_slider.val/(np.mean(i)**2)
+        t.set_text("A = %0.2e" % new_Aval)
+        fig.canvas.draw_idle()
+    a_slider.on_changed(sliders_on_changed)
+    alpha_slider.on_changed(sliders_on_changed)
 
-ax = plt.gca()
+    # Add a button for resetting the parameters
+    reset_button_ax = fig.add_axes([0.8, 0.025, 0.1, 0.05])
+    reset_button = Button(reset_button_ax, 'Reset', hovercolor='red')
+    def reset_button_on_clicked(mouse_event):
+        alpha_slider.reset()
+        a_slider.reset()
+    reset_button.on_clicked(reset_button_on_clicked)
+else:
+    ax.loglog(f, psd)
+
+#ax = plt.gca()
+#plt.ylim(1e-2, 1e4)
+ax.set_xlim(5,2e4)
 ax.minorticks_on()
 ax.tick_params('both', length = 8, width = 1, which = 'major')
 ax.tick_params('both', length = 4, width = 1, which = 'minor')
+
 plt.show()
