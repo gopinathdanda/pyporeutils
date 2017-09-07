@@ -1,7 +1,6 @@
 import numpy as np
 import os
 
-
 # Data types list, in order specified by the HEKA file header v2.0.
 # Using big-endian.
 # Code 0=uint8,1=uint16,2=uint32,3=int8,4=int16,5=int32,
@@ -103,8 +102,9 @@ class HekaReader:
 
         # if decimate:
         #     self.decimate_sample_rate = self.sample_rate * 2 / self.points_per_channel_per_block  # we are downsampling
+        voltages = self.get_all_voltages()
 
-        return data
+        return [data, voltages]
 
     def get_all_voltages(self):
         """
