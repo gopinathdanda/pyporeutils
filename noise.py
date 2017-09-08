@@ -11,19 +11,19 @@ from scipy import signal
 from scipy.optimize import curve_fit
 
 # FILENAME
-fname = 'Data/PK_2ndDay_163239.hkd'
+fname = 'Data/Chip_PK_LD3_1M_04262017_204908.hkd'
 
 # LIMITS FOR DATA EXTRACTION (0 = ENTIRE RANGE)
-extract_lims = [[0, 0], [44, 52]]
+extract_lims = [[0, 0], [0, 3.5]]
 
 # LIMITS FOR 1/F NOISE CURVE FITTING
-noise_lims = [1, 1e3]
+noise_lims = [3, 1e3]
 
-# PLOT OPTIONS: [VOLTAGE & CURRENT, CURRENT, NOISE_FIT]
+# PLOT OPTIONS: [VOLTAGE & CURRENT, CURRENT, NOISE]
 options = [[True, False, False], [True, True, True]]
 
 # SELECT PLOT OPTION (0 PLOTS ENTIRE RANGE, OTHER INDICES PLOT THE SECOND RANGE FROM extract_lims)
-option_select = 0
+option_select = 1
 
 def invf(x, a, alpha):
     return a/(x**alpha)
@@ -79,7 +79,7 @@ i, t, fs, v = extract(fname, decimate = False, start = range_to_show[0], stop = 
 mean_current = (np.mean(i)/1e3)
 print("Mean current = %0.2f nA" % mean_current)
 
-view_traces, view_current_trace, view_noise_fit = options[option_select]
+view_traces, view_current_trace, view_noise = options[option_select]
 
 if view_traces == True:
     fig_traces, ax_traces = plt.subplots(2, sharex=True)
@@ -97,12 +97,11 @@ psd, f, pspec, fspec = noise(i, fs)
 I_rms = np.sqrt(pspec.max())
 print("I_rms = %0.2f pA" % I_rms)
 
-#plt.loglog(fspec, np.sqrt(pspec))
-fig = plt.figure(figsize=(10,10))
-ax = fig.add_subplot(111)
-ax.tick_params(axis='both', which='major', labelsize=16)
-
-if view_noise_fit == True:
+if view_noise == True:
+    #plt.loglog(fspec, np.sqrt(pspec))
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    ax.tick_params(axis='both', which='major', labelsize=16)
     fig.subplots_adjust(bottom=0.25)
     ax.loglog(f, psd)
     x, popt, pcov = fit(f, psd, invf, start = noise_lims[0], stop = noise_lims[1])
@@ -126,7 +125,7 @@ if view_noise_fit == True:
     
     # Add two sliders for tweaking the parameters
     a_slider_ax  = fig.add_axes([0.15, 0.15, 0.75, 0.03])
-    a_slider = Slider(a_slider_ax, r'$Log(A*I^2)$', -4, 4, valinit=np.log10(a_0), dragging=True)
+    a_slider = Slider(a_slider_ax, r'$Log(A*I^2)$', -4, 8, valinit=np.log10(a_0), dragging=True)
     alpha_slider_ax = fig.add_axes([0.15, 0.1, 0.75, 0.03])
     alpha_slider = Slider(alpha_slider_ax, r'$\alpha$', 0, 2, valinit=alpha_0, dragging=True)
     def sliders_on_changed(val):
@@ -144,14 +143,13 @@ if view_noise_fit == True:
         alpha_slider.reset()
         a_slider.reset()
     reset_button.on_clicked(reset_button_on_clicked)
-else:
-    ax.loglog(f, psd)
+    
+    #ax = plt.gca()
+    #plt.ylim(1e-2, 1e4)
+    ax.set_xlim(5,2e4)
+    ax.minorticks_on()
+    ax.tick_params('both', length = 8, width = 1, which = 'major')
+    ax.tick_params('both', length = 4, width = 1, which = 'minor')
 
-#ax = plt.gca()
-#plt.ylim(1e-2, 1e4)
-ax.set_xlim(5,2e4)
-ax.minorticks_on()
-ax.tick_params('both', length = 8, width = 1, which = 'major')
-ax.tick_params('both', length = 4, width = 1, which = 'minor')
 
 plt.show()
