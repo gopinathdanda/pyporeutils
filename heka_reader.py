@@ -25,13 +25,13 @@ class HekaReader:
         self.heka_file = open(filename, 'rb')
         # Check that the first line is as expected
         line = self.heka_file.readline()
-        if not 'Nanopore Experiment Data File V2.0' in line:
+        if not bytes('Nanopore Experiment Data File V2.0', 'utf-8') in line:
             self.heka_file.close()
             raise IOError('Heka data file format not recognized.')
         # Just skip over the file header text, should be always the same.
         while True:
             line = self.heka_file.readline()
-            if 'End of file format' in line:
+            if bytes('End of file format', 'utf-8') in line:
                 break
 
         # So now heka_file should be at the binary data.
@@ -55,7 +55,7 @@ class HekaReader:
         self.channel_list_number = len(self.channel_list)
 
         self.header_bytes_per_block = self.per_channel_per_block_length * self.channel_list_number
-        self.data_bytes_per_block = self.per_file_params['Points per block'] * 2 * self.channel_list_number
+        self.data_bytes_per_block = self.per_file_params[bytes('Points per block', 'utf-8')] * 2 * self.channel_list_number
         self.total_bytes_per_block = self.header_bytes_per_block + self.data_bytes_per_block + self.per_block_length
 
         # Calculate number of points per channel
@@ -65,10 +65,10 @@ class HekaReader:
         if not remainder == 0:
             self.heka_file.close()
             raise IOError('Heka file ends with incomplete block')
-        self.block_size = self.per_file_params['Points per block']
+        self.block_size = self.per_file_params[bytes('Points per block', 'utf-8')]
         self.points_per_channel_total = self.block_size * self.num_blocks_in_file
 
-        self.sample_rate = 1.0 / self.per_file_params['Sampling interval']
+        self.sample_rate = 1.0 / self.per_file_params[bytes('Sampling interval', 'utf-8')]
 
     def close_file(self):
         self.heka_file.close()
@@ -91,9 +91,9 @@ class HekaReader:
             else:
                 data.append(np.empty(self.points_per_channel_total))  # initialize_c array
 
-        for i in xrange(0, self.num_blocks_in_file):
+        for i in range(0, self.num_blocks_in_file):
             block = self.read_heka_next_block()
-            for j in xrange(len(block)):
+            for j in range(len(block)):
                 if decimate:  # if decimating data, only keep max and min of each block
                     data[j][2 * i] = np.max(block[j])
                     data[j][2 * i + 1] = np.min(block[j])
@@ -117,9 +117,9 @@ class HekaReader:
         for _ in self.channel_list:
             data.append(np.empty(self.points_per_channel_total))  # initialize_c array
 
-        for i in xrange(0, self.num_blocks_in_file):
+        for i in range(0, self.num_blocks_in_file):
             block = self.read_heka_next_block_voltages()
-            for j in xrange(len(block)):
+            for j in range(len(block)):
                 data[j][i * self.block_size:(i + 1) * self.block_size] = block[j]
 
         # if decimate:
@@ -137,7 +137,7 @@ class HekaReader:
         totalsize = 0
         size = 0
         done = False
-        for i in xrange(0, n_blocks):
+        for i in range(0, n_blocks):
             block = self.read_heka_next_block()
             if block[0].size == 0:
                 return block
@@ -150,11 +150,11 @@ class HekaReader:
         # stitch the data together
         data = []
         index = []
-        for _ in xrange(0, len(self.channel_list)):
+        for _ in range(0, len(self.channel_list)):
             data.append(np.empty(totalsize))
             index.append(0)
         for block in blocks:
-            for i in xrange(0, len(self.channel_list)):
+            for i in range(0, len(self.channel_list)):
                 data[i][index[i]:index[i] + block[i].size] = block[i]
                 index[i] = index[i] + block[i].size
 
@@ -183,8 +183,8 @@ class HekaReader:
         dt = np.dtype('>i2')  # int16
         values = np.ndarray([])
         tmp = np.ndarray([])
-        for i in xrange(0, len(self.channel_list)):
-            values = 1.0 * np.ones(self.block_size) * per_channel_block_params[i]['Voltage']
+        for i in range(0, len(self.channel_list)):
+            values = 1.0 * np.ones(self.block_size) * per_channel_block_params[i][bytes('Voltage', 'utf-8')]
             # get rid of nan's
             #         values[np.isnan(values)] = 0
             tmp = np.fromfile(self.heka_file, dt, count=self.block_size)
@@ -214,10 +214,10 @@ class HekaReader:
         data = []
         dt = np.dtype('>i2')  # int16
         values = np.ndarray([])
-        for i in xrange(0, len(self.channel_list)):
+        for i in range(0, len(self.channel_list)):
             values = np.fromfile(self.heka_file, dt, count=self.block_size) * \
                      per_channel_block_params[i][
-                         'Scale']
+                         bytes('Scale', 'utf-8')]
             # get rid of nan's
             #         values[np.isnan(values)] = 0
             data.append(values)
@@ -251,7 +251,7 @@ class HekaReader:
         self.heka_file.read(3)  # read null characters?
         dt = np.dtype('>u1')
         num_params = np.fromfile(self.heka_file, dt, 1)[0]
-        for _ in xrange(0, num_params):  # underscore used for discarded parameters
+        for _ in range(0, num_params):  # underscore used for discarded parameters
             type_code = np.fromfile(self.heka_file, dt, 1)[0]
             name = np.fromfile(self.heka_file, datatype, 1)[0].strip()
             param_list.append([name, ENCODINGS[type_code]])
