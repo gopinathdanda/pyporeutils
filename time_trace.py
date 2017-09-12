@@ -2,14 +2,15 @@
 
 # EXTRACT TIMES TRACES OF CURRENT OR CONDUCTANCE FROM HKD FILE
 
-from pypore.i_o import get_reader_from_filename
+import heka_reader as heka
 import numpy as np
 import matplotlib.pyplot as plt
 
 def time_trace(filename, start, stop, dec = True, dec_rate = 2500, conductance = False, vb = 0.1):
     # Get file
-    reader = get_reader_from_filename(filename)
-    data = reader.get_all_data(decimate = dec)[0]
+    reader = heka.HekaReader(filename)
+    all_data = reader.get_all_data(decimate = dec)
+    data = all_data[0][0]
     sample_rate = reader.get_sample_rate()
     start_len = int(start*sample_rate)
     stop_len = int(stop*sample_rate)
