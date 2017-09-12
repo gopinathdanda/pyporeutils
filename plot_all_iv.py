@@ -54,9 +54,9 @@ def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g =
              verticalalignment='center',
              transform = ax.transAxes)
         if(save == True):
-            if(len(location) == 2): # If location is given
-                [dirname, img_folder] = location
-                final_fname = dirname+"/"+img_folder+"/"+fname[-19:-4]+".png"
+            if(len(location) == 3): # If location is given
+                [raw_fname, dirname, img_folder] = location
+                final_fname = dirname+"/"+img_folder+"/"+raw_fname[:-4]+".png"
             else:   # Or else store in folder of file
                 final_fname = fname[:-4]+".png"
             print(final_fname)
@@ -75,11 +75,11 @@ def recursive_plot(main_dirname, img_folder):
                 if(filename[-4:] == '.hkr'):
                     if(not os.path.isdir(dirname+"/"+img_folder)):
                         os.mkdir(dirname+"/"+img_folder)
-                    plot_iv(os.path.join(dirname, filename), save = True, location = [dirname, img_folder])
+                    plot_iv(os.path.join(dirname, filename), save = True, location = [filename, dirname, img_folder], fit = False)
 
 
 
-plot_iv("Data/IV/073117 chip SD_LD3.5_1M_300mV_-300mV_07312017_145250.hkr", avg = True, fit = False, show_g = False)
-dirname = './Data/IV'
+#plot_iv("Data/IV/Chip_PT.hkr", save = True, avg = True, fit = False, show_g = True)
+dirname = './Data/IV/Final'
 img_folder = "IV_avg"
-#recursive_plot(dirname, img_folder)
+recursive_plot(dirname, img_folder)
