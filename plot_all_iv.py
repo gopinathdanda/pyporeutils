@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-# PLOT AND SAVE IV FROM ALL HKR FILES IN FOLDER & SUB-FOLDER
+# PLOT AND SAVE IV FROM ALL HKR FILES IN FOLDERS
 
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
-
 import os
 
-#fname = "Data/IV/Chip PE/IV/032717 Chip PE_LD4_1M_100mV_-100mV_03272017_162344.hkr"
+#plot_iv("Data/IV/Chip PD/032417 Chip PD_LD4_1M_100mV_-100mV_03242017_163304.hkr")
+main_dirname = './Data/IV'
+
 
 def csv_reader(file_obj):
     reader = csv.DictReader(file_obj, delimiter="\t")
@@ -22,7 +23,7 @@ def csv_reader(file_obj):
 def linear(m, b, x):
     return list(map(lambda y:m*y+b, x))
 
-def plot_iv(fname, save = True, raw_fname = "", dirname = ""):
+def plot_iv(fname, save = False, raw_fname = "", dirname = ""):
     with open(fname, 'r') as f_obj:
         i, v = csv_reader(f_obj)
         fig = plt.figure("IV")
@@ -47,16 +48,7 @@ def plot_iv(fname, save = True, raw_fname = "", dirname = ""):
         else:
             plt.show()
 
-#plot_iv("Data/IV/Chip PD/032417 Chip PD_LD4_1M_100mV_-100mV_03242017_163304.hkr")      
-
-main_dirname = './Data/IV'
-
 for dirname, dirnames, filenames in os.walk(main_dirname):
-    
-    #print(dirnames)
-    #print(filenames)
-    
-    # print path to all subdirectories first.
     if(dirname != './Data/IV'):
         print("------------------")
         print(dirname)
@@ -66,7 +58,3 @@ for dirname, dirnames, filenames in os.walk(main_dirname):
                 if(not os.path.isdir(dirname+"/IVs")):
                     os.mkdir(dirname+"/IVs")
                 plot_iv(os.path.join(dirname, filename), save = True, raw_fname = filename, dirname = dirname)
-
-    # print path to all filenames.
-    #for filename in filenames:
-    #    print(os.path.join(dirname, filename))
