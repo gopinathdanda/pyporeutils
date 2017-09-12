@@ -1,11 +1,9 @@
 # pyporeutils
 
-This packages is an extension of https://github.com/parkin/pypore. It uses the reader package from pypore to analyze nanopore data.
+These packages were an extension of https://github.com/parkin/pypore. It now uses its own version of the data reader from the pypore project.
 
 ## Dependencies
 
-* Pypore (https://github.com/parkin/pypore)
 * Numpy
 * Matplotlib
-* Math
 * Scipy
