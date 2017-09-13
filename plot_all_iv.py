@@ -19,21 +19,31 @@ def csv_reader(file_obj):
 def linear(m, b, x):
     return list(map(lambda y:m*y+b, x))
 
-def avg_voltages(currents, voltages):
+def avg_voltages(currents, voltages, limit_trace, limit_v, invert):
     u_voltages = list(set(voltages))
+    inverter = 1.0
+    if(invert == True):
+        u_voltages = [i*-1 for i in u_voltages]
+        inverter = -1.0
+    if(limit_trace == True):
+        u_v = []
+        for v in u_voltages:
+            if(int(v) <= limit_v and int(v) >= -limit_v):
+                u_v.append(v)
+        u_voltages = u_v
     c = np.asarray(currents)
     u_current = []
     for v in u_voltages:
-        u_indices = [i for i, x in enumerate(voltages) if x == v]
-        u_current.append(np.mean(c[u_indices]))
+        u_indices = [i for i, x in enumerate(voltages) if x == inverter*v]
+        u_current.append(inverter*np.mean(c[u_indices]))
     return([u_current, u_voltages])
 
-def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g = True):
+def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g = True, limit_trace = False, limit_v = 400, invert = False):
     with open(fname, 'rU') as f_obj:
         i, v = csv_reader(f_obj)
         
         if(avg == True):
-            i, v = avg_voltages(i, v)
+            i, v = avg_voltages(i, v, limit_trace, limit_v, invert)
         
         fig = plt.figure("IV")
         ax = plt.subplot(111)
@@ -56,7 +66,7 @@ def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g =
         if(save == True):
             if(len(location) == 3): # If location is given
                 [raw_fname, dirname, img_folder] = location
-                final_fname = dirname+"/"+img_folder+"/"+raw_fname[:-4]+".png"
+                final_fname = dirname+"/"+img_folder+"/"+raw_fname[-19:-4]+".png"
             else:   # Or else store in folder of file
                 final_fname = fname[:-4]+".png"
             print(final_fname)
@@ -65,7 +75,7 @@ def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g =
         else:
             plt.show()
 
-def recursive_plot(main_dirname, img_folder):    
+def recursive_plot(main_dirname, img_folder, avg = True):    
     for dirname, dirnames, filenames in os.walk(main_dirname):
         if(dirname != main_dirname):
             print("------------------")
@@ -79,7 +89,7 @@ def recursive_plot(main_dirname, img_folder):
 
 
 
-#plot_iv("Data/IV/Chip_PT.hkr", save = True, avg = True, fit = False, show_g = True)
+plot_iv("Data/Chip_PF.hkr", save = False, avg = True, fit = False, show_g = True, invert = True)
 dirname = './Data/IV/Final'
 img_folder = "IV_avg"
-recursive_plot(dirname, img_folder)
+#recursive_plot(dirname, img_folder)
