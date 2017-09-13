@@ -38,7 +38,7 @@ def avg_voltages(currents, voltages, limit_trace, limit_v, invert):
         u_current.append(inverter*np.mean(c[u_indices]))
     return([u_current, u_voltages])
 
-def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g = True, limit_trace = False, limit_v = 400, invert = False):
+def plot_iv(fname, save_plot = False, location = [], avg = True, fit = True, show_g = True, limit_trace = False, limit_v = 400, invert = False, save_data = True):
     with open(fname, 'rU') as f_obj:
         i, v = csv_reader(f_obj)
         
@@ -63,13 +63,22 @@ def plot_iv(fname, save = False, location = [], avg = True, fit = True, show_g =
              horizontalalignment='left',
              verticalalignment='center',
              transform = ax.transAxes)
-        if(save == True):
+        if(save_data == True):
+            if(len(location) == 3): # If location is given
+                [raw_fname, dirname, img_folder] = location
+                path = dirname+"/"+img_folder+"/"
+                final_fname = path+raw_fname[-19:-4]+".csv"
+            else:   # Or else store in folder of file
+                final_fname = fname[:-4]+".csv"
+            # Save in csv with voltage in V and current in A
+            np.savetxt(final_fname, np.transpose(np.asarray([[k*1e-3 for k in v], [l*1e-9 for l in i]])), delimiter=",")
+        
+        if(save_plot == True):
             if(len(location) == 3): # If location is given
                 [raw_fname, dirname, img_folder] = location
                 final_fname = dirname+"/"+img_folder+"/"+raw_fname[-19:-4]+".png"
             else:   # Or else store in folder of file
                 final_fname = fname[:-4]+".png"
-            print(final_fname)
             plt.savefig(final_fname, dpi=300, bbox_inches = "tight")
             plt.clf()
         else:
@@ -89,7 +98,7 @@ def recursive_plot(main_dirname, img_folder, avg = True):
 
 
 
-plot_iv("Data/Chip_PF.hkr", save = False, avg = True, fit = False, show_g = True, invert = True)
+plot_iv("Data/Chip_PF.hkr", save_plot = False, avg = True, fit = False, show_g = True, invert = False, save_data = True)
 dirname = './Data/IV/Final'
 img_folder = "IV_avg"
 #recursive_plot(dirname, img_folder)
