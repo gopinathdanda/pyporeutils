@@ -20,7 +20,7 @@ def linear(m, b, x):
     return list(map(lambda y:m*y+b, x))
 
 def avg_voltages(currents, voltages, limit_trace, limit_v, invert):
-    u_voltages = list(set(voltages))
+    u_voltages = sorted(list(set(voltages)))
     inverter = 1.0
     if(invert == True):
         u_voltages = [i*-1 for i in u_voltages]
@@ -38,7 +38,7 @@ def avg_voltages(currents, voltages, limit_trace, limit_v, invert):
         u_current.append(inverter*np.mean(c[u_indices]))
     return([u_current, u_voltages])
 
-def plot_iv(fname, save_plot = False, location = [], avg = True, fit = True, show_g = True, limit_trace = False, limit_v = 400, invert = False, save_data = True):
+def plot_iv(fname, save_plot = False, save_data = True, location = [], avg = True, fit = False, show_g = True, limit_trace = False, limit_v = 400, invert = False):
     with open(fname, 'rU') as f_obj:
         i, v = csv_reader(f_obj)
         
@@ -94,11 +94,11 @@ def recursive_plot(main_dirname, img_folder, avg = True):
                 if(filename[-4:] == '.hkr'):
                     if(not os.path.isdir(dirname+"/"+img_folder)):
                         os.mkdir(dirname+"/"+img_folder)
-                    plot_iv(os.path.join(dirname, filename), save = True, location = [filename, dirname, img_folder], fit = False)
+                    plot_iv(os.path.join(dirname, filename), save_plot = True, save_data = True, location = [filename, dirname, img_folder], fit = False)
 
 
 
-plot_iv("Data/Chip_PF.hkr", save_plot = False, avg = True, fit = False, show_g = True, invert = False, save_data = True)
+plot_iv("Data/Chip_PF.hkr", save_plot = False, save_data = True, avg = True, show_g = True)
 dirname = './Data/IV/Final'
 img_folder = "IV_avg"
 #recursive_plot(dirname, img_folder)
