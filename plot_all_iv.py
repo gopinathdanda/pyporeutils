@@ -7,44 +7,36 @@ import csv
 import matplotlib.pyplot as plt
 import os
 
-def csv_reader(file_obj):
+def csv_reader(file_obj, invert = False, limit = []):
     reader = csv.DictReader(file_obj, delimiter="\t")
     i = []
     v = []
+    inverter = 1 if invert == False else -1
     for line in reader:
-        i.append(float(line["Current Avg"])*1e9)    # Current in nA
-        v.append(float(line["Voltage"])*1e3)        # Voltage in mV
-    return ([i,v])
+        curr = inverter*float(line["Current Avg"])*1e9   # Current in nA
+        volt = inverter*float(line["Voltage"])*1e3       # Voltage in mV
+        if(len(limit) == 2 and (volt > max(limit) or volt < min(limit))):
+            continue
+        i.append(curr)    
+        v.append(volt)        
+    return np.asarray([i,v])
 
 def linear(m, b, x):
     return list(map(lambda y:m*y+b, x))
 
-def avg_voltages(currents, voltages, limit_trace, limit_v, invert):
+def avg_voltages(currents, voltages):
     u_voltages = sorted(list(set(voltages)))
-    inverter = 1.0
-    if(invert == True):
-        u_voltages = [i*-1 for i in u_voltages]
-        inverter = -1.0
-    if(limit_trace == True):
-        u_v = []
-        for v in u_voltages:
-            if(int(v) <= limit_v and int(v) >= -limit_v):
-                u_v.append(v)
-        u_voltages = u_v
-    c = np.asarray(currents)
     u_current = []
     for v in u_voltages:
-        u_indices = [i for i, x in enumerate(voltages) if x == inverter*v]
-        u_current.append(inverter*np.mean(c[u_indices]))
-    return([u_current, u_voltages])
+        u_indices = [i for i, x in enumerate(voltages) if x == v]
+        u_current.append(np.mean(currents[u_indices]))
+    return np.asarray([u_current, u_voltages])
 
-def plot_iv(fname, save_plot = False, save_data = True, location = [], avg = True, fit = False, show_g = True, limit_trace = False, limit_v = 400, invert = False):
+def plot_iv(fname, save_plot = False, save_data = True, location = [], avg = True, fit = False, show_g = True, limit = [], invert = False):
     with open(fname, 'rU') as f_obj:
-        i, v = csv_reader(f_obj)
-        
+        i, v = csv_reader(f_obj, invert = invert, limit = limit)
         if(avg == True):
-            i, v = avg_voltages(i, v, limit_trace, limit_v, invert)
-        
+            i, v = avg_voltages(i, v)
         fig = plt.figure("IV")
         ax = plt.subplot(111)
         ax.scatter(v, i)
@@ -98,7 +90,7 @@ def recursive_plot(main_dirname, img_folder, avg = True):
 
 
 
-plot_iv("Data/Chip_PF.hkr", save_plot = False, save_data = True, avg = True, show_g = True)
+plot_iv("Data/Chip_PF.hkr", save_plot = False, save_data = False, invert = True, limit = [500, -500])
 dirname = './Data/IV/Final'
 img_folder = "IV_avg"
 #recursive_plot(dirname, img_folder)
