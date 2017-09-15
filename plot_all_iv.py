@@ -8,12 +8,14 @@ import matplotlib.pyplot as plt
 import os
 
 def csv_reader(file_obj, invert = False, limit = []):
-    '''
-    Read hkr files and return current (in nA) and voltage (in V) in a numpy array
-    Options:
-        invert (boolean)                = Invert both current and voltage
-        limit (float) [limit1, limit2]  = Limit data extraction based on voltage limit; order of list not important 
-    '''
+    """Extract current and voltage information from .hkr files
+    
+    :param file_obj: File to be read
+    :param invert: Invert both current and voltage (Default = False)
+    :param limit: Limit data extraction based on voltage limit provided as a list of 2 floats; order of list not important (Default = [])
+    :returns: Numpy array of current and voltage in nA and V, respectively          
+    
+    """
     reader = csv.DictReader(file_obj, delimiter="\t")
     i = []
     v = []
@@ -28,21 +30,33 @@ def csv_reader(file_obj, invert = False, limit = []):
     return np.asarray([i,v])
 
 def linear(m, b, x):
-    '''
-    Returns a linear function of the form:  m * x + b
-    '''
+    """Generate a linear function
+    
+    :param m: Slope of linear equation
+    :param b: Intercept of linear equation
+    :param x: Independent variable
+    :returns: Linear function of the form m * x + b
+    
+    """
     return m*x+b
 
 def unique(arr):
-    '''
-    Returns an ascendingly sorted array with only unique elements
-    '''
+    """Ascendingly sort array with only unique elements
+    
+    :param arr: Array to be processed
+    :returns: Sorted unique array
+    
+    """
     return sorted(list(set(arr)))
 
 def avg_currents(currents, voltages):
-    '''
-    Returns average currents (for each voltage) and the corresponding voltages in a numpy array
-    '''
+    """Generate average currents for corresponding voltages
+    
+    :param currents: Current numpy array
+    :param voltages: Voltage numpy array
+    :returns: Numpy array of average currents and corresponding voltages
+    
+    """
     u_voltages = unique(voltages)
     u_current = []
     for v in u_voltages:
@@ -51,32 +65,35 @@ def avg_currents(currents, voltages):
     return np.asarray([u_current, u_voltages])
 
 def di_dv(currents, voltages):
-    '''
-    Return discrete slope (dI/dV) and the corresponding voltages in a numpy array
-    '''
+    """Generate change in conductance with voltage
+    
+    :param currents: Current numpy array
+    :param voltages: Voltage numpy array
+    :returns: Numpy array of discrete dI/dV and corresponding voltages in nS and V, respectively
+    
+    """
     if(len(unique(voltages)) != len(voltages)):
         currents, voltages = avg_currents(currents, voltages)
     v_step = (max(voltages)-min(voltages))/len(voltages)*1.0
-    di = np.diff(currents)/v_step
+    dS = np.diff(currents)/v_step
     dv = voltages+v_step
-    return ([di, dv[:-1]])
+    return ([dS, dv[:-1]])
 
 def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = False, avg = True, fit = False, show_g = True, invert = False, limit = []):
-    '''
-    Plot or save IV, linear fit and dI/dV characteristics in .png and .csv files, respectively
-    Options:
-        save_plot (boolean)                                 = Save plot in a .png file in same location as file or (location) option, if provided
-        save_data (boolean)                                 = Save data in a .csv file in same location as file or (location) option, if provided
-        location (strings) [raw filename, directory name]   = Location of file to be saved
-        
-        didv (boolean)                                      = Plot or save dI/dV characteristics 
-        avg (boolean)                                       = Plot or save averaged currents and corresponding voltages
-        fit (boolean)                                       = Plot best linear fit
-        show_g (boolean)                                    = Show G from best linear fit in graph
-        
-        invert (boolean)                                    = Invert both current and voltage
-        limit (float) [limit1, limit2]                      = Limit data extraction based on voltage limit; order of list not important
-    '''
+    """Plot or save IV, linear fit and dI/dV characteristics in .png and .csv files, respectively
+    
+    :param fname: Filename of .hkr file to be processed
+    :param save_plot: Save plot in a .png file in same location as file or (location) option, if provided (Default = False)
+    :param save_data: Save data in a .csv file in same location as file or (location) option, if provided (Default = True)
+    :param location: Location of file to be saved as a 2 string list of the format [raw filename, directory name] (Default = [])
+    :param didv: Plot or save dI/dV characteristics (Default = False)
+    :param avg: Plot or save averaged currents and corresponding voltages (Default = True)
+    :param fit: Plot best linear fit (Default = False)
+    :param show_g: Show G from best linear fit in graph (Default = True)
+    :param invert: Invert both current and voltage (Default = False)
+    :param limit: Limit data extraction based on voltage limit provided as a list of 2 floats; order of list not important (Default = [])
+    
+    """
     with open(fname, 'rU') as f_obj:
         i, v = csv_reader(f_obj, invert = invert, limit = limit)
         if(avg == True):
@@ -88,10 +105,12 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
         if(didv == True):
             fig2 = plt.figure("dI_dV")
             ax2 = plt.subplot(111)
-            di, dv = di_dv(i, v)
-            ax2.scatter(dv, di)
+            dS, dv = di_dv(i, v)
+            ax2.scatter(dv, dS)
             dv_lim = (max(dv)-min(dv))/len(dv)*10.0
+            dS_lim = max(dS)/len(dS)*10.0
             ax2.set_xlim([min(dv)-dv_lim, max(dv)+dv_lim])
+            ax2.set_ylim([0, max(dS)+dS_lim])
             ax2.set_xlabel("Voltage (V)", size = "large")
             ax2.set_ylabel("dI/dV (nS)", size = "large")
        
@@ -123,7 +142,7 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
             np.savetxt(final_fname+".csv", np.transpose([v, i*1e-9]), delimiter=",")
             if(didv == True):
                 # Save in csv with voltage in V and current in nS
-                np.savetxt(d_final_fname+".csv", np.transpose([dv, di]), delimiter=",")
+                np.savetxt(d_final_fname+".csv", np.transpose([dv, dS]), delimiter=",")
         
         if(save_plot == True):
             fig.savefig(final_fname+".png", dpi=300, bbox_inches = "tight")
@@ -134,12 +153,13 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
         else:
             plt.show()
 
-def recursive_plot(main_dirname, sub_folder = ""):
-    '''
-    Plot or save recursively from a folder
-    Options:
-        sub_folder (string)     = Name of subdirectory where plots and generated data will be saved
-    '''
+def recursive_plot(main_dirname, sub_folder = ''):
+    """Process IV data recursively from a folder
+    
+    :param main_dirname: Name of directory to look for .hkr files
+    :param sub_folder: Name of subdirectory where plots and generated data will be saved (Default = '')
+    
+    """
     for dirname, dirnames, filenames in os.walk(main_dirname):
         print("------------------")
         print(dirname)
