@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-# PLOT AND SAVE IV FROM ALL HKR FILES IN FOLDERS
+""""
+Plot and/or save IV data from .hkr files
+"""
 
 import numpy as np
 import csv
@@ -12,7 +14,7 @@ def csv_reader(file_obj, invert = False, limit = []):
     
     :param file_obj: File to be read
     :param invert: Invert both current and voltage (Default = False)
-    :param limit: Limit data extraction based on voltage limit provided as a list of 2 floats; order of list not important (Default = [])
+    :param limit: Limit data extraction based on voltage limit in V provided as a list of 2 floats; order of list not important (Default = [])
     :returns: Numpy array of current and voltage in nA and V, respectively          
     
     """
@@ -116,8 +118,8 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
        
         g, b = np.polyfit(v, i, 1)
         if(fit == True):
-            ax.plot(v, linear(g, b, v))
-        print("G = %0.2f nS" % g)
+            ax.plot(v, linear(g[0], g[1], v))
+        print("G = %0.2f nS" % g[0])
     
         v_lim = (max(v)-min(v))/len(v)*10.0
         ax.set_xlim([min(v)-v_lim, max(v)+v_lim])
