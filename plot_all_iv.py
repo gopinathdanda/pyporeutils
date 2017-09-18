@@ -31,17 +31,6 @@ def csv_reader(file_obj, invert = False, limit = []):
         v.append(volt)        
     return np.asarray([i,v])
 
-def linear(m, b, x):
-    """Generate a linear function
-    
-    :param m: Slope of linear equation
-    :param b: Intercept of linear equation
-    :param x: Independent variable
-    :returns: Linear function of the form m * x + b
-    
-    """
-    return m*x+b
-
 def unique(arr):
     """Ascendingly sort array with only unique elements
     
@@ -116,9 +105,10 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
             ax2.set_xlabel("Voltage (V)", size = "large")
             ax2.set_ylabel("dI/dV (nS)", size = "large")
        
-        g, b = np.polyfit(v, i, 1)
+        g = np.polyfit(v, i, 1)
+        lin = np.poly1d(g)
         if(fit == True):
-            ax.plot(v, linear(g[0], g[1], v))
+            ax.plot(v, lin(v))
         print("G = %0.2f nS" % g[0])
     
         v_lim = (max(v)-min(v))/len(v)*10.0
@@ -126,7 +116,7 @@ def plot_iv(fname, save_plot = False, save_data = True, location = [], didv = Fa
         ax.set_xlabel("Voltage (V)", size = "large")
         ax.set_ylabel("Ionic current (nA)", size = "large")
         if(show_g == True):
-            ax.text(0.7, 0.1,("G = %0.2f nS" % (g)),
+            ax.text(0.7, 0.1,("G = %0.2f nS" % (g[0])),
              horizontalalignment='left',
              verticalalignment='center',
              transform = ax.transAxes)
