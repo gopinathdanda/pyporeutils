@@ -8,17 +8,6 @@ import heka_reader as heka
 import numpy as np
 import matplotlib.pyplot as plt
 
-def linear(m, b, x):
-    """Generate a linear function
-    
-    :param m: Slope of linear equation
-    :param b: Intercept of linear equation
-    :param x: Independent variable
-    :returns: Linear function of the form m * x + b
-    
-    """
-    return m*x+b
-
 def extract(fname, start = 0, stop = 0, decimate = False):
     dec_rate = 2500
     reader = heka.HekaReader(fname)
@@ -54,7 +43,8 @@ i = i*1e9
 
 plt.plot(t, i, "black")
 a = np.polyfit(t, i, 1)
-plt.plot(t, linear(a[0], a[1], t))
+p = np.poly1d(a)
+plt.plot(t, p(t))
 print("dI/dt = %0.02fnA/s " % a[0])
 #plt.ylim(0, 40)
 ax = plt.gca()
