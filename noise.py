@@ -28,36 +28,6 @@ option_select = 1
 def invf(x, a, alpha):
     return a/(x**alpha)
 
-def extract(fname, start = 0, stop = 0, decimate = True, Vapp = 0.1, molarity = 1):
-    dec_rate = 2500
-    reader = heka.HekaReader(fname)
-    all_data = reader.get_all_data(decimate=decimate)
-    data = all_data[0][0]
-    voltages = all_data[1][0]
-    sample_rate = reader.get_sample_rate()
-    total_length = len(data)
-    if stop == 0:
-        stop = total_length*1.0/sample_rate
-    
-    start_len = int(start*sample_rate)
-    stop_len = int(stop*sample_rate)
-    if decimate:
-        start_len = int(start_len/dec_rate)
-        stop_len = int(stop_len/dec_rate)
-    
-    if stop == 0:
-        stop_len = total_length
-        stop = int(stop_len/sample_rate*1.0)
-        if decimate:
-            stop = int(stop_len*dec_rate/sample_rate*1.0)
-    length = stop_len - start_len
-    
-    i = data[start_len:stop_len]*1e12
-    t = np.linspace(0, (stop-start), num = length)
-    v = voltages[start_len:stop_len]
-    
-    return np.asarray([i, t, sample_rate, v])
-
 def noise(i, fs):
     f, psd = signal.welch(i, fs, nperseg = 2**16)
     fspec, pspec = signal.welch(i, fs, 'flattop', nperseg = 2**16, scaling = 'spectrum')
@@ -75,7 +45,9 @@ def fit(f, psd, func, stop = 1000, start = 1):
     return np.asarray([xdata, popt, pcov])
 
 range_to_show = extract_lims[0 if option_select == 0 else 1]
-i, t, fs, v = extract(fname, decimate = False, start = range_to_show[0], stop = range_to_show[1])
+reader = heka.HekaReader(fname)
+i, t, fs, v = reader.extract_data(start = range_to_show[0], stop = range_to_show[1])
+i = i*1e12
 mean_current = (np.mean(i)/1e3)
 print("Mean current = %0.2f nA" % mean_current)
 

@@ -73,10 +73,39 @@ class HekaReader:
     def close_file(self):
         self.heka_file.close()
     
+    def extract_data(self, start = 0, stop = 0, decimate = False):
+        dec_rate = 2500
+        all_data = self.get_all_data(decimate = decimate)
+        data = all_data[0][0]
+        voltages = all_data[1][0]
+        sample_rate = self.get_sample_rate()
+        total_length = len(data)
+    
+        start_len = int(start*sample_rate)
+        stop_len = int(stop*sample_rate)
+    
+        if decimate:
+            start_len = int(start_len/dec_rate)
+            stop_len = int(stop_len/dec_rate)
+    
+        if stop == 0:
+            stop_len = total_length
+            stop = int(stop_len/sample_rate*1.0)
+            if decimate:
+                stop = int(stop_len*dec_rate/sample_rate*1.0)
+    
+        length = stop_len - start_len
+    
+        i = data[start_len:stop_len]
+        t = np.linspace(0, (stop-start), num = length)
+        v = voltages[start_len:stop_len]
+    
+        return np.asarray([i, t, sample_rate, v])
+    
     def get_sample_rate(self):
         return self.sample_rate
     
-    def get_all_data(self, decimate=False):
+    def get_all_data(self, decimate = False):
         """
         Reads files created by the Heka acquisition software and returns the data.
         :returns: List of numpy arrays, one for each channel of data.
@@ -102,11 +131,11 @@ class HekaReader:
 
         # if decimate:
         #     self.decimate_sample_rate = self.sample_rate * 2 / self.points_per_channel_per_block  # we are downsampling
-        voltages = self.get_all_voltages()
+        voltages = self.get_all_voltages(decimate = decimate)
 
         return [data, voltages]
 
-    def get_all_voltages(self):
+    def get_all_voltages(self, decimate = False):
         """
         Returns a time series of the voltage
         """
@@ -115,12 +144,19 @@ class HekaReader:
 
         data = []
         for _ in self.channel_list:
-            data.append(np.empty(self.points_per_channel_total))  # initialize_c array
+            if decimate:  # If decimating, just keep max and min value from each block
+                data.append(np.empty(self.num_blocks_in_file * 2))
+            else:
+                data.append(np.empty(self.points_per_channel_total))  # initialize_c array
 
         for i in range(0, self.num_blocks_in_file):
             block = self.read_heka_next_block_voltages()
             for j in range(len(block)):
-                data[j][i * self.block_size:(i + 1) * self.block_size] = block[j]
+                if decimate:  # if decimating data, only keep max and min of each block
+                    data[j][2 * i] = np.max(block[j])
+                    data[j][2 * i + 1] = np.min(block[j])
+                else:
+                    data[j][i * self.block_size:(i + 1) * self.block_size] = block[j]
 
         # if decimate:
         #     self.decimate_sample_rate = self.sample_rate * 2 / self.points_per_channel_per_block  # we are downsampling

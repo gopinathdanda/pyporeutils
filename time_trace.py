@@ -8,37 +8,8 @@ import heka_reader as heka
 import numpy as np
 import matplotlib.pyplot as plt
 
-def extract(fname, start = 0, stop = 0, decimate = False):
-    dec_rate = 2500
-    reader = heka.HekaReader(fname)
-    all_data = reader.get_all_data(decimate = decimate)
-    data = all_data[0][0]
-    voltages = all_data[1][0]
-    sample_rate = reader.get_sample_rate()
-    total_length = len(data)
-    
-    start_len = int(start*sample_rate)
-    stop_len = int(stop*sample_rate)
-    
-    if decimate:
-        start_len = int(start_len/dec_rate)
-        stop_len = int(stop_len/dec_rate)
-    
-    if stop == 0:
-        stop_len = total_length
-        stop = int(stop_len/sample_rate*1.0)
-        if decimate:
-            stop = int(stop_len*dec_rate/sample_rate*1.0)
-    
-    length = stop_len - start_len
-    
-    i = data[start_len:stop_len]
-    t = np.linspace(0, (stop-start), num = length)
-    v = voltages[start_len:stop_len]
-    
-    return np.asarray([i, t, sample_rate, v])
-
-i, t, sample_rate, v = extract('Data/ChipAU.hkd', start = 14, stop = 51)
+reader = heka.HekaReader('Data/ChipAU.hkd')
+i, t, sample_rate, v = reader.extract_data(start = 14, stop = 51, decimate = True)
 i = i*1e9
 
 plt.plot(t, i, "black")
