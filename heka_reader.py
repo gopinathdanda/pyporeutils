@@ -73,8 +73,7 @@ class HekaReader:
     def close_file(self):
         self.heka_file.close()
     
-    def extract_data(self, start = 0, stop = 0, decimate = False):
-        dec_rate = 2500
+    def extract_data(self, start = 0, stop = 0, decimate = False, dec_rate = 2500):
         all_data = self.get_all_data(decimate = decimate)
         data = all_data[0][0]
         voltages = all_data[1][0]
