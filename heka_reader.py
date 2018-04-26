@@ -99,7 +99,7 @@ class HekaReader:
         t = np.linspace(0, (stop-start), num = length)
         v = voltages[start_len:stop_len]
     
-        return np.asarray([i, t, sample_rate, v])
+        return np.asarray([i, t, sample_rate, v, total_length])
     
     def get_sample_rate(self):
         return self.sample_rate
