@@ -39,7 +39,10 @@ def plot_noise(option, data, view_controls = True, view_fit = True):
         v, i, t, f, psd, Avalue, popt, mean_current, I_rms, x, invfx = data[0]
         fig_traces, ax_traces = plt.subplots(2, sharex=True)
         ax_traces[0].plot(t, v*1000)
+        ax_traces[0].set_ylabel('Voltage (mV)')
         ax_traces[1].plot(t, i*1e-3)
+        ax_traces[1].set_ylabel('Current (nA)')
+        ax_traces[1].set_xlabel('Time (s)')
 
     if view_current_trace == True:
         plt.figure(figsize=(10,8.25))
@@ -51,6 +54,9 @@ def plot_noise(option, data, view_controls = True, view_fit = True):
         for dataset in data:
             v, i, t, f, psd, Avalue, popt, mean_current, I_rms, x, invfx = dataset
             plt.plot(t, i*1e-3)
+            axp = plt.gca()
+            axp.set_xlabel('Time (s)')
+            axp.set_ylabel('Current (nA)')
             #plt.ylim(1.5, 5)
             #plt.xlim(0, max(t))
     
@@ -65,12 +71,13 @@ def plot_noise(option, data, view_controls = True, view_fit = True):
         ax.minorticks_on()
         ax.tick_params('both', length = 8, width = 1, which = 'major', direction = 'in')
         ax.tick_params('both', length = 4, width = 1, which = 'minor', direction = 'in')
-        ax.legend()
         
         for dataset in data:
             v, i, t, f, psd, Avalue, popt, mean_current, I_rms, x, invfx = dataset
         
             ax.loglog(f, psd)
+            ax.set_xlabel('Fequency (Hz)')
+            ax.set_ylabel('PSD')
         
             if len(data) == 1:
                 t = ax.text(0.05, 0.1,(u"A = %0.2e; \u03B1 = %0.2f" % (Avalue, popt[1])),
@@ -112,13 +119,13 @@ def plot_noise(option, data, view_controls = True, view_fit = True):
                         a_slider.reset()
                     reset_button.on_clicked(reset_button_on_clicked)
             '''
-        legend = ax.legend(labels = ["SA_LD2.5", "PQ_LD2.5", "PI_LD3", "PK_LD3", "PB_LD4", "PV_LD2"])
+        #legend = ax.legend(labels = ["SA_LD2.5", "PQ_LD2.5", "PI_LD3", "PK_LD3", "PB_LD4", "PV_LD2"])
     
 
-def noise(fname, extract_lims, noise_lims, options = [[True, False, False], [True, True, True]], option_select = 0, view = True):
+def noise(fname, extract_lims = [[0, 0], [0, 0]], noise_lims = [3, 1e3], options = [[True, False, False], [True, True, True]], option_select = 0, view = True, threshold = 0):
     range_to_show = extract_lims[0 if option_select == 0 else 1]
     reader = heka.HekaReader(fname)
-    i, t, fs, v = reader.extract_data(start = range_to_show[0], stop = range_to_show[1])
+    i, t, fs, v, ttl = reader.extract_data(start = range_to_show[0], stop = range_to_show[1])
     i = i*1e12
     mean_current = (np.mean(i)/1e3)
     print("--------------------------------------------------")
@@ -131,14 +138,14 @@ def noise(fname, extract_lims, noise_lims, options = [[True, False, False], [Tru
     I_rms = np.sqrt(pspec.max())
     print("I_rms = %0.2f pA" % I_rms)
     
-    #threshold = 0.1
-    #difference = np.abs(np.diff(psd))
-    #outlier_idx = difference < threshold
-    #new_idx = np.hstack((outlier_idx, (False)))
-    #print(difference)
-    #plt.loglog(difference[new_idx[:len(new_idx)-1]])
-    #f = f[new_idx]
-    #psd = psd[new_idx]
+    if threshold != 0:
+        difference = np.abs(np.diff(psd))
+        outlier_idx = difference < threshold
+        new_idx = np.hstack((outlier_idx, (False)))
+        #print(difference)
+        plt.loglog(difference[new_idx[:len(new_idx)-1]])
+        f = f[new_idx]
+        psd = psd[new_idx]
     
     x, popt, pcov = fit(f, psd, invf, start = noise_lims[0], stop = noise_lims[1])
     print("-------------------------")
@@ -168,10 +175,7 @@ options = [[True, False, False], [True, True, True]]
 # SELECT PLOT OPTION (0 PLOTS ENTIRE RANGE, OTHER INDICES PLOT THE SECOND RANGE FROM extract_lims)
 option_select = 1
 
-final = noise("Data/ChipSA2.hkd", [[0,0], [5, 9.3]], noise_lims, option_select = 1, view = False)                           #5-10
-final2 = noise("Noise/PQ_Noise_1VPulse_181827.hkd", [[0,0], [23, 27.3]], noise_lims, option_select = 1, view = False)       #23-28
-final3 = noise("Noise/PI_195331_2ndDay.hkd", [[0,0], [16, 20.3]], noise_lims, option_select = 1, view = False)              #16-20.8
-final4 = noise("Noise/PK_2ndDay_163239.hkd", [[0,0], [17.9, 22.2]], noise_lims, option_select = 1, view = False)            #17.9-22.2
-plot_noise([False, True, True], np.asarray([final, final2, final3, final4]), view_fit = False)
-#plot_noise([True, True, True], [final6], view_fit = False)
+final = noise("Data/PQ_Noise_1VPulse_181827.hkd", [[0,0], [23, 27.3]], noise_lims, option_select = 1, view = False)       #23-28
+final2 = noise("Data/ChipPF.hkd", [[0,0], [15.6, 19]], noise_lims, option_select = 1, view = False)            #17.9-22.2
+plot_noise([False, True, True], np.asarray([final, final2]), view_fit = True)
 plt.show()
